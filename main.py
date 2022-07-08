@@ -62,8 +62,10 @@ def encrypt():
     print("\n")
 
 
-def decrypt():
-    path = input(INFO + "[?] Enter the path to the file your would like to decrypt: ")
+def decrypt(path=None, private_key_path=None):
+    if path == None:
+        path = input(INFO + "[?] Enter the path to the file your would like to decrypt: ")
+
     if not os.path.isfile(path):
         print(ERROR + "[!] There is no file found on that path.")
         return decrypt()
@@ -74,12 +76,14 @@ def decrypt():
         print(ERROR + "[!] This file is not an encrypted PGP message. Error: " + str(e))
         return decrypt()
 
-    private_key_path = input(INFO + "[?] Enter the path of your private key file [private.asc]: ")
+    if private_key_path == None:
+        private_key_path = input(INFO + "[?] Enter the path of your private key file [private.asc]: ")
+        
     if private_key_path == "":
         private_key_path = "private.asc"
     if not os.path.isfile(private_key_path):
         print(ERROR + "[!] There is no file found on that path.")
-        return decrypt()
+        return decrypt(path=path)
 
     private_key, _ = PGPKey.from_file(private_key_path)
     private_key_pass = getpass.getpass(INFO + "[?] Enter your private key passphrase: ")
@@ -88,11 +92,11 @@ def decrypt():
         with private_key.unlock(private_key_pass):
             decrypted_msg = (private_key.decrypt(message)).message
     except errors.PGPDecryptionError as e:
-        print(ERROR + "[!] Could not decrypt message. Incorrect passphrase? Error: " + str(e))
-        return decrypt()
+        print(ERROR + "[!] Could not decrypt message. Error: " + str(e))
+        return decrypt(path=path, private_key_path=private_key_path)
 
     print("\n")
-    print(SUCCESS + decrypted_msg)
+    print(SUCCESS + decrypted_msg.decode('utf-8'))
     print("\n")
 
 
